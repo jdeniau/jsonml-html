@@ -13,6 +13,10 @@
   "files": [
     "dist/"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jdeniau/jsonml-html.git"
+  },
   "scripts": {
     "build": "rm -rf dist; tsc",
     "test": "vitest",
