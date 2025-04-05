@@ -455,14 +455,13 @@ function handleObject(elem, object) {
  * also used by JsonML.BST
  * @param {Node} elem
  * @param {*} jml
- * @param {function} filter
  * @return {Node}
  */
-function patch(elem, jml, filter) {
+function patch(elem, jml) {
   for (let i = 1; i < jml.length; i++) {
     if (Array.isArray(jml[i]) || "string" === typeof jml[i]) {
       // append children
-      appendDOM(elem, toHTML(jml[i], filter));
+      appendDOM(elem, toHTML(jml[i]));
     } else if (
       "object" === typeof jml[i] &&
       jml[i] !== null &&
@@ -523,13 +522,13 @@ export function toHTML(jml, filter = undefined) {
       return frag;
     }
 
-    const elem = patch(createElement(tagName), jml, filter);
+    const elem = patch(createElement(tagName), jml);
 
     // trim extraneous whitespace
     trimWhitespace(elem);
     return elem && isFunction(filter) ? filter(elem) : elem;
   } catch (ex) {
     // handle error with complete context
-    return onError(ex, jml, filter);
+    return onError(ex);
   }
 }
