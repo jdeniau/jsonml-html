@@ -1,16 +1,20 @@
 {
   "name": "jsonml-html",
   "type": "module",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "main": "dist/jsonml.js",
+  "types": "dist/jsonml.d.ts",
   "exports": {
-    ".": "./dist/jsonml.js"
+    ".": {
+      "import": "./dist/jsonml.js",
+      "types": "./dist/jsonml.d.ts"
+    }
   },
   "files": [
     "dist/"
   ],
   "scripts": {
-    "build": "mkdir -p dist; cp src/jsonml.js dist/jsonml.js",
+    "build": "rm -rf dist; tsc",
     "test": "vitest",
     "prepublishOnly": "npm run build"
   },
@@ -19,6 +23,7 @@
   "description": "",
   "devDependencies": {
     "@vitest/coverage-v8": "^3.1.1",
+    "typescript": "^5.8.3",
     "vitest": "^3.1.1"
   }
 }

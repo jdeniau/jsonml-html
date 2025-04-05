@@ -1,9 +1,5 @@
 /**
  * Attribute name map
- *
- * @private
- * @constant
- * @type {Object.<string>}
  */
 const ATTR_MAP = {
   accesskey: "accessKey",
@@ -28,41 +24,29 @@ const ATTR_MAP = {
   usemap: "useMap",
   willvalidate: "willValidate",
   // can add more attributes here as needed
-};
+} as const;
 
 /**
  * Attribute duplicates map
- *
- * @private
- * @constant
- * @type {Object.<string>}
  */
 const ATTR_DUP = {
   enctype: "encoding",
   onscroll: "DOMMouseScroll",
   // can add more attributes here as needed
-};
+} as const;
 
 /**
  * Attributes to be set via DOM
- *
- * @private
- * @constant
- * @type {Object.<number>}
  */
 const ATTR_DOM = {
   autocapitalize: 1,
   autocomplete: 1,
   autocorrect: 1,
   // can add more attributes here as needed
-};
+} as const;
 
 /**
  * Boolean attribute map
- *
- * @private
- * @constant
- * @type {Object.<number>}
  */
 const ATTR_BOOL = {
   async: 1,
@@ -82,80 +66,39 @@ const ATTR_BOOL = {
   spellcheck: 1,
   willvalidate: 1,
   // can add more attributes here as needed
-};
+} as const;
 
 /**
  * Leading SGML line ending pattern
- *
- * @private
- * @constant
- * @type {RegExp}
  */
 const LEADING = /^[\r\n]+/;
 
 /**
  * Trailing SGML line ending pattern
- *
- * @private
- * @constant
- * @type {RegExp}
  */
 const TRAILING = /[\r\n]+$/;
 
-/**
- * @private
- * @const
- * @type {number}
- */
 const NUL = 0;
-
-/**
- * @private
- * @const
- * @type {number}
- */
 const FUN = 1;
-
-/**
- * @private
- * @const
- * @type {number}
- */
 const ARY = 2;
-
-/**
- * @private
- * @const
- * @type {number}
- */
 const OBJ = 3;
-
-/**
- * @private
- * @const
- * @type {number}
- */
 const VAL = 4;
 
 /**
  * Determines if the value is a function
- *
- * @private
- * @param {*} val the object being tested
- * @return {boolean}
  */
-function isFunction(val) {
+function isFunction(val: unknown): val is Function {
   return typeof val === "function";
+}
+
+function isHTMLElement(elem: unknown): elem is HTMLElement {
+  return !!elem && typeof (elem as HTMLElement).tagName === "string";
 }
 
 /**
  * Determines the type of the value
- *
- * @private
- * @param {*} val the object being tested
- * @return {number}
  */
-function getType(val) {
+function getType(val: unknown): number {
   switch (typeof val) {
     case "object":
       return !val
@@ -176,12 +119,10 @@ function getType(val) {
 
 /**
  * Creates a DOM element
- *
- * @private
- * @param {string} tag The element's tag name
- * @return {Node}
  */
-function createElement(tag) {
+function createElement(tag: ""): DocumentFragment;
+function createElement(tag: string): HTMLElement;
+function createElement(tag: string): HTMLElement | DocumentFragment {
   if (!tag) {
     // create a document fragment to hold multiple-root elements
     if (document.createDocumentFragment) {
@@ -190,6 +131,7 @@ function createElement(tag) {
 
     tag = "";
   } else if (tag.charAt(0) === "!") {
+    // @ts-expect-error handle that
     return document.createComment(tag === "!" ? "" : tag.substr(1) + " ");
   }
 
@@ -198,13 +140,11 @@ function createElement(tag) {
 
 /**
  * Appends an attribute to an element
- *
- * @private
- * @param {Node} elem The element
- * @param {Object} attr Attributes object
- * @return {Node}
  */
-function addAttributes(elem, attr) {
+function addAttributes<E extends HTMLElement>(
+  elem: E,
+  attr: Record<string, unknown>
+): E {
   // for each attributeName
   for (let name in attr) {
     if (attr.hasOwnProperty(name)) {
@@ -218,35 +158,46 @@ function addAttributes(elem, attr) {
           type = VAL;
         }
 
+        // @ts-expect-error handle that
         name = ATTR_MAP[name.toLowerCase()] || name;
 
         if (name === "style") {
           if (getType(elem.style.cssText) !== NUL) {
+            // @ts-expect-error handle that
             elem.style.cssText = value;
           } else {
+            // @ts-expect-error handle that
             elem.style = value;
           }
         } else if (
+          // @ts-expect-error handle that
           !ATTR_DOM[name.toLowerCase()] &&
           (type !== VAL ||
             name.charAt(0) === "$" ||
+            // @ts-expect-error handle that
             getType(elem[name]) !== NUL ||
+            // @ts-expect-error handle that
             getType(elem[ATTR_DUP[name]]) !== NUL)
         ) {
           // direct setting of existing properties
+          // @ts-expect-error handle that
           elem[name] = value;
 
           // also set duplicated properties
+          // @ts-expect-error handle that
           name = ATTR_DUP[name];
           if (name) {
+            // @ts-expect-error handle that
             elem[name] = value;
           }
+          // @ts-expect-error handle that
         } else if (ATTR_BOOL[name.toLowerCase()]) {
           if (value) {
             // boolean attributes
             elem.setAttribute(name, name);
 
             // also set duplicated attributes
+            // @ts-expect-error handle that
             name = ATTR_DUP[name];
             if (name) {
               elem.setAttribute(name, name);
@@ -256,11 +207,14 @@ function addAttributes(elem, attr) {
           // http://www.quirksmode.org/dom/w3c_core.html#attributes
 
           // custom and 'data-*' attributes
+          // @ts-expect-error handle that
           elem.setAttribute(name, value);
 
           // also set duplicated attributes
+          // @ts-expect-error handle that
           name = ATTR_DUP[name];
           if (name) {
+            // @ts-expect-error handle that
             elem.setAttribute(name, value);
           }
         }
@@ -272,21 +226,21 @@ function addAttributes(elem, attr) {
 
 /**
  * Appends a child to an element
- *
- * @private
- * @param {Node} elem The parent element
- * @param {Node} child The child
  */
-function appendDOM(elem, child) {
+function appendDOM(elem: HTMLElement | DocumentFragment, child: Node | null) {
   if (child) {
+    // @ts-expect-error handle that
     const tag = (elem.tagName || "").toLowerCase();
     if (elem.nodeType === 8) {
       // comment
       if (child.nodeType === 3) {
         // text node
+        // @ts-expect-error handle that
         elem.nodeValue += child.nodeValue;
       }
+      // @ts-expect-error handle that
     } else if (tag === "table" && elem.tBodies) {
+      // @ts-expect-error handle that
       if (!child.tagName) {
         // must unwrap documentFragment for tables
         if (child.nodeType === 11) {
@@ -298,29 +252,38 @@ function appendDOM(elem, child) {
       }
 
       // in IE must explicitly nest TRs in TBODY
+      // @ts-expect-error handle that
       const childTag = child.tagName.toLowerCase(); // child tagName
       if (childTag && childTag !== "tbody" && childTag !== "thead") {
         // insert in last tbody
         let tBody =
+          // @ts-expect-error handle that
           elem.tBodies.length > 0
-            ? elem.tBodies[elem.tBodies.length - 1]
+            ? // @ts-expect-error handle that
+              elem.tBodies[elem.tBodies.length - 1]
             : null;
         if (!tBody) {
           tBody = createElement(childTag === "th" ? "thead" : "tbody");
           elem.appendChild(tBody);
         }
         tBody.appendChild(child);
+        // @ts-expect-error handle that
       } else if (elem.canHaveChildren !== false) {
         elem.appendChild(child);
       }
+      // @ts-expect-error handle that
     } else if (tag === "style" && document.createStyleSheet) {
       // IE requires this interface for styles
+      // @ts-expect-error handle that
       elem.cssText = child;
+      // @ts-expect-error handle that
     } else if (elem.canHaveChildren !== false) {
       elem.appendChild(child);
     } else if (
       tag === "object" &&
+      // @ts-expect-error handle that
       child.tagName &&
+      // @ts-expect-error handle that
       child.tagName.toLowerCase() === "param"
     ) {
       // IE-only path
@@ -331,7 +294,9 @@ function appendDOM(elem, child) {
         /* empty */
       }
       try {
+        // @ts-expect-error handle that
         if (elem.object) {
+          // @ts-expect-error handle that
           elem.object[child.name] = child.value;
         }
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -344,12 +309,8 @@ function appendDOM(elem, child) {
 
 /**
  * Tests a node for whitespace
- *
- * @private
- * @param {Node} node The node
- * @return {boolean}
  */
-function isWhitespace(node) {
+function isWhitespace(node: Node | null): node is Node {
   return (
     !!node &&
     node.nodeType === 3 &&
@@ -363,19 +324,21 @@ function isWhitespace(node) {
  * @private
  * @param {Node} node The node
  */
-function trimPattern(node, pattern) {
-  if (!!node && node.nodeType === 3 && pattern.exec(node.nodeValue)) {
-    node.nodeValue = node.nodeValue.replace(pattern, "");
+function trimPattern(node: Node | null, pattern: RegExp): void {
+  if (
+    !!node &&
+    node.nodeType === 3 &&
+    node.nodeValue &&
+    pattern.exec(node.nodeValue)
+  ) {
+    node.nodeValue = node.nodeValue?.replace(pattern, "") ?? "";
   }
 }
 
 /**
  * Removes leading and trailing whitespace nodes
- *
- * @private
- * @param {Node} elem The node
  */
-function trimWhitespace(elem) {
+function trimWhitespace(elem: HTMLElement | DocumentFragment): void {
   if (elem) {
     while (isWhitespace(elem.firstChild)) {
       // trim leading whitespace text nodes
@@ -394,14 +357,15 @@ function trimWhitespace(elem) {
 
 /**
  * Default error handler
- * @param {Error} ex
- * @return {Node}
  */
-function onError(ex) {
+function onError(ex: Error): Text {
   return document.createTextNode("[" + ex + "]");
 }
 
-function handleObject(elem, object) {
+function handleObject<E extends HTMLElement | DocumentFragment>(
+  elem: E,
+  object: unknown
+): E {
   const containerNode = createElement("span");
   let childNode;
 
@@ -412,7 +376,7 @@ function handleObject(elem, object) {
   } else if (typeof object === "number") {
     containerNode.style = `color: #164`;
 
-    childNode = document.createTextNode(object);
+    childNode = document.createTextNode(String(object));
   } else if (object instanceof Date) {
     childNode = createElement("");
     const dateNode = createElement("span");
@@ -448,35 +412,31 @@ function handleObject(elem, object) {
   return elem;
 }
 
-/* override this to perform custom error handling during binding */
-// exports.onerror = null;
-
-/**
- * also used by JsonML.BST
- * @param {Node} elem
- * @param {*} jml
- * @return {Node}
- */
-function patch(elem, jml) {
+function patch<E extends HTMLElement | DocumentFragment>(
+  elem: E,
+  jml: Array<unknown>
+): E {
   for (let i = 1; i < jml.length; i++) {
-    if (Array.isArray(jml[i]) || "string" === typeof jml[i]) {
+    const item = jml[i];
+
+    if (Array.isArray(item) || "string" === typeof item) {
       // append children
-      appendDOM(elem, toHTML(jml[i]));
+      appendDOM(elem, toHTML(item));
     } else if (
-      "object" === typeof jml[i] &&
-      jml[i] !== null &&
-      elem.nodeType === 1
+      "object" === typeof item &&
+      item !== null &&
+      isHTMLElement(elem)
+      // elem.nodeType === 1
     ) {
       // add attributes
-      const { object, ...rest } = jml[i];
+      if ("object" in item) {
+        const { object, ...rest } = item;
 
-      if ("object" in jml[i]) {
-        const { object, ...rest } = jml[i];
-
-        elem = handleObject(elem, object);
         elem = addAttributes(elem, rest);
+        elem = handleObject(elem, object);
       } else {
-        elem = addAttributes(elem, jml[i]);
+        // @ts-expect-error handle that
+        elem = addAttributes(elem, item);
       }
     }
   }
@@ -486,11 +446,16 @@ function patch(elem, jml) {
 
 /**
  * Main builder entry point
- * @param {string|array} jml
- * @param {?function} filter
- * @return {Node}
  */
-export function toHTML(jml, filter = undefined) {
+export function toHTML(jml: "" | [], filter?: Function | undefined): null;
+export function toHTML(
+  jml: string | Array<unknown>,
+  filter?: Function | undefined
+): Node;
+export function toHTML(
+  jml: string | Array<unknown>,
+  filter: Function | undefined = undefined
+): Node | null {
   try {
     if (!jml) {
       return null;
@@ -509,6 +474,7 @@ export function toHTML(jml, filter = undefined) {
       // create a document fragment to hold elements
       const frag = createElement("");
       for (let i = 1; i < jml.length; i++) {
+        // @ts-expect-error handle that
         appendDOM(frag, toHTML(jml[i], filter));
       }
 
@@ -529,6 +495,6 @@ export function toHTML(jml, filter = undefined) {
     return elem && isFunction(filter) ? filter(elem) : elem;
   } catch (ex) {
     // handle error with complete context
-    return onError(ex);
+    return onError(ex instanceof Error ? ex : new Error("Unknown error"));
   }
 }

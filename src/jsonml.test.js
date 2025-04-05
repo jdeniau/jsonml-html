@@ -3,7 +3,7 @@
  */
 
 import { describe, expect, test } from "vitest";
-import { toHTML } from "./jsonml";
+import { toHTML } from "./jsonml.ts";
 
 describe("toHTML", () => {
   test("should convert a simple JsonML array to a DOM element", () => {
