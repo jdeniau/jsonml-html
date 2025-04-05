@@ -10,4 +10,5 @@ It is based upon [jsonml.js](https://github.com/mckamey/jsonml) package, with so
 
 - It does handle the special `object` tag name, which is used in [console formatters to generate child objects](https://firefox-source-docs.mozilla.org/devtools-user/custom_formatters/index.html#generating-child-elements).
 - It does not handle IE compatibility anymore.
+- It does not "handler" functions starting with "on"
 - It dropped the `raw` function and the `Markup` class, and the specific error handling.

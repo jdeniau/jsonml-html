@@ -1,62 +1,3 @@
-/*
- jsonml-html.js
- JsonML to HTML utility
-
- Created: 2006-11-09-0116
-
- Copyright (c)2006-2012 Stephen M. McKamey
- Distributed under The MIT License: http://jsonml.org/license
-
- JsonML.toHTML(JsonML, filter)
-
- This method produces a tree of DOM elements from a JsonML tree. The
- array must not contain any cyclical references.
-
- The optional filter parameter is a function which can filter and
- transform the results. It receives each of the DOM nodes, and
- its return value is used instead of the original value. If it
- returns what it received, then structure is not modified. If it
- returns undefined then the member is deleted.
-
- This is useful for binding unobtrusive JavaScript to the generated
- DOM elements.
-
- Example:
-
- // Parses the structure. If an element has a specific CSS value then
- // takes appropriate action: Remove from results, add special event
- // handlers, or bind to a custom component.
-
- var myUI = JsonML.toHTML(myUITemplate, function (elem) {
-   if (elem.className.indexOf('Remove-Me') >= 0) {
-     // this will remove from resulting DOM tree
-     return null;
-   }
-
-   if (elem.tagName && elem.tagName.toLowerCase() === 'a' &&
-       elem.className.indexOf('External-Link') >= 0) {
-     // this is the equivalent of target='_blank'
-     elem.onclick = function(evt) {
-       window.open(elem.href); return false;
-     };
-
-   } else if (elem.className.indexOf('Fancy-Widgit') >= 0) {
-     // bind to a custom component
-     FancyWidgit.bindDOM(elem);
-   }
-   return elem;
- });
-
- JsonML.toHTMLText(JsonML)
- Converts JsonML to HTML text
-
- // Implement onerror to handle any runtime errors while binding:
- JsonML.onerror = function (ex, jml, filter) {
-   // display inline error message
-   return document.createTextNode('['+ex+']');
- };
-*/
-
 /**
  * Attribute name map
  *
@@ -197,60 +138,6 @@ const OBJ = 3;
 const VAL = 4;
 
 /**
- * @private
- * @const
- * @type {number}
- */
-const RAW = 5;
-
-/**
- * Wraps a data value to maintain as raw markup in output
- *
- * @private
- * @this {Markup}
- * @param {string} value The value
- * @constructor
- */
-function Markup(value) {
-  /**
-   * @type {string}
-   * @const
-   * @protected
-   */
-  this.value = value;
-}
-
-/**
- * Renders the value
- *
- * @public
- * @override
- * @this {Markup}
- * @return {string} value
- */
-Markup.prototype.toString = function () {
-  return this.value;
-};
-
-// /**
-//  * @param {string} value
-//  * @return {Markup}
-//  */
-// function raw(value) {
-//   return new Markup(value);
-// }
-
-/**
- * @param {*} value
- * @return {boolean}
- */
-function isRaw(value) {
-  return value instanceof Markup;
-}
-
-const isMarkup = isRaw;
-
-/**
  * Determines if the value is a function
  *
  * @private
@@ -275,8 +162,6 @@ function getType(val) {
         ? NUL
         : Array.isArray(val)
         ? ARY
-        : isMarkup(val)
-        ? RAW
         : val instanceof Date
         ? VAL
         : OBJ;
@@ -312,49 +197,6 @@ function createElement(tag) {
 }
 
 /**
- * Adds an event handler to an element
- *
- * @private
- * @param {Node} elem The element
- * @param {string} name The event name
- * @param {function(Event)} handler The event handler
- */
-function addHandler(elem, name, handler) {
-  if (name.substr(0, 2) === "on") {
-    name = name.substr(2);
-  }
-
-  switch (typeof handler) {
-    case "function":
-      if (elem.addEventListener) {
-        // DOM Level 2
-        elem.addEventListener(name, handler, false);
-      } else if (elem.attachEvent && getType(elem[name]) !== NUL) {
-        // IE legacy events
-        elem.attachEvent("on" + name, handler);
-      } else {
-        // DOM Level 0
-        const old = elem["on" + name] || elem[name];
-        elem["on" + name] = elem[name] = !isFunction(old)
-          ? handler
-          : function (e) {
-              return (
-                old.call(this, e) !== false && handler.call(this, e) !== false
-              );
-            };
-      }
-      break;
-
-    case "string":
-      // inline functions are DOM Level 0
-      /*jslint evil:true */
-      elem["on" + name] = new Function("event", handler);
-      /*jslint evil:false */
-      break;
-  }
-}
-
-/**
  * Appends an attribute to an element
  *
  * @private
@@ -383,14 +225,6 @@ function addAttributes(elem, attr) {
             elem.style.cssText = value;
           } else {
             elem.style = value;
-          }
-        } else if (name.substr(0, 2) === "on") {
-          addHandler(elem, name, value);
-
-          // also set duplicated events
-          name = ATTR_DUP[name];
-          if (name) {
-            addHandler(elem, name, value);
           }
         } else if (
           !ATTR_DOM[name.toLowerCase()] &&
@@ -559,33 +393,6 @@ function trimWhitespace(elem) {
 }
 
 /**
- * Converts the markup to DOM nodes
- *
- * @private
- * @param {string|Markup} value The node
- * @return {Node}
- */
-function toDOM(value) {
-  const wrapper = createElement("div");
-  wrapper.innerHTML = "" + value;
-
-  // trim extraneous whitespace
-  trimWhitespace(wrapper);
-
-  // eliminate wrapper for single nodes
-  if (wrapper.childNodes.length === 1) {
-    return wrapper.firstChild;
-  }
-
-  // create a document fragment to hold elements
-  const frag = createElement("");
-  while (wrapper.firstChild) {
-    frag.appendChild(wrapper.firstChild);
-  }
-  return frag;
-}
-
-/**
  * Default error handler
  * @param {Error} ex
  * @return {Node}
@@ -656,8 +463,6 @@ function patch(elem, jml, filter) {
     if (Array.isArray(jml[i]) || "string" === typeof jml[i]) {
       // append children
       appendDOM(elem, toHTML(jml[i], filter));
-    } else if (isMarkup(jml[i])) {
-      appendDOM(elem, toDOM(jml[i].value));
     } else if (
       "object" === typeof jml[i] &&
       jml[i] !== null &&
@@ -695,9 +500,6 @@ export function toHTML(jml, filter = undefined) {
       return document.createTextNode(jml);
     }
 
-    if (isMarkup(jml)) {
-      return toDOM(jml.value);
-    }
     if (!Array.isArray(jml) || "string" !== typeof jml[0]) {
       throw new SyntaxError("invalid JsonML");
     }
@@ -727,11 +529,7 @@ export function toHTML(jml, filter = undefined) {
     trimWhitespace(elem);
     return elem && isFunction(filter) ? filter(elem) : elem;
   } catch (ex) {
-    try {
-      // handle error with complete context
-      return onError(ex, jml, filter);
-    } catch (ex2) {
-      return document.createTextNode("[" + ex2 + "]");
-    }
+    // handle error with complete context
+    return onError(ex, jml, filter);
   }
 }
