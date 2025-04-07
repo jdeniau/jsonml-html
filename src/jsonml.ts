@@ -362,39 +362,56 @@ function onError(ex: Error): Text {
   return document.createTextNode("[" + ex + "]");
 }
 
+const COLORS = {
+  string: "light-dark( #aa1111, #ffb3b3)",
+  number: "light-dark( #116644, #80e1a7)",
+  date: "light-dark( #116644, #80e1a7)",
+  null: "light-dark( #770088, #d4bfff)",
+  undefined: "light-dark( #777777, #cccccc)",
+} as const;
+type COLORS = (typeof COLORS)[keyof typeof COLORS];
+
 function handleObject<E extends HTMLElement | DocumentFragment>(
   elem: E,
   object: unknown
 ): E {
   const containerNode = createElement("span");
+  containerNode.className = "jsonml-object-container";
+  containerNode.style = `
+  color-scheme: light dark;
+  --jsonml-color-string: ${COLORS.string};
+  --jsonml-color-number: ${COLORS.number};
+  --jsonml-color-date: ${COLORS.date};
+  --jsonml-color-null: ${COLORS.null};
+  --jsonml-color-undefined: ${COLORS.undefined};
+  `;
   let childNode;
 
   if (typeof object === "string") {
-    containerNode.style = `color: #a11`;
+    containerNode.style.color = `var(--jsonml-color-string)`;
 
     childNode = document.createTextNode(`"${object.trim()}"`);
   } else if (typeof object === "number") {
-    containerNode.style = `color: #164`;
-
+    containerNode.style.color = `var(--jsonml-color-number)`;
     childNode = document.createTextNode(String(object));
   } else if (object instanceof Date) {
     childNode = createElement("");
     const dateNode = createElement("span");
     dateNode.appendChild(document.createTextNode("Date: "));
-    dateNode.style = `color: #164`;
+    dateNode.style.color = `var(--jsonml-color-date)`;
 
     childNode.appendChild(dateNode);
 
     const valueNode = createElement("span");
     valueNode.appendChild(document.createTextNode(object.toString()));
-    valueNode.style = `color: #a11`;
+    valueNode.style.color = `var(--jsonml-color-string)`;
 
     childNode.appendChild(valueNode);
   } else if (object === null) {
-    containerNode.style = `color: #708`;
+    containerNode.style.color = `var(--jsonml-color-null)`;
     childNode = document.createTextNode("null");
   } else if (object === undefined) {
-    containerNode.style = `color: #777777`;
+    containerNode.style.color = `var(--jsonml-color-undefined)`;
     childNode = document.createTextNode("undefined");
   } else if (typeof object === "object") {
     childNode = document.createTextNode(JSON.stringify(object));

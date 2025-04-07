@@ -214,27 +214,27 @@ describe("toHTML", () => {
       null,
       {
         expectedTextContent: "null",
-        expectedStyle: "color: rgb(119, 0, 136);",
+        expectedCssColor: "var(--jsonml-color-null)",
       },
     ],
     [
       undefined,
       {
-        expectedStyle: "color: rgb(119, 119, 119);",
+        expectedCssColor: "var(--jsonml-color-undefined)",
         expectedTextContent: "undefined",
       },
     ],
     [
       "string",
       {
-        expectedStyle: "color: rgb(170, 17, 17);",
+        expectedCssColor: "var(--jsonml-color-string)",
         expectedTextContent: '"string"',
       },
     ],
     [
       1,
       {
-        expectedStyle: "color: rgb(17, 102, 68);",
+        expectedCssColor: "var(--jsonml-color-number)",
         expectedTextContent: "1",
       },
     ],
@@ -256,7 +256,7 @@ describe("toHTML", () => {
     ],
   ])(
     "should handle object attribute %s",
-    (object, { expectedTextContent, expectedStyle }) => {
+    (object, { expectedTextContent, expectedCssColor }) => {
       const jsonml = ["div", { object }];
       const result = toHTML(jsonml);
 
@@ -266,7 +266,7 @@ describe("toHTML", () => {
       expect(result.childNodes.length).toBe(1);
       expect(result.childNodes[0].nodeType).toBe(Node.ELEMENT_NODE);
       expect(result.childNodes[0].tagName).toBe("SPAN");
-      expect(result.childNodes[0].style.cssText).toBe(expectedStyle ?? "");
+      expect(result.childNodes[0].style.color).toBe(expectedCssColor ?? "");
 
       expect(result.getAttribute("object")).toBe(null);
     }
@@ -286,12 +286,12 @@ describe("toHTML", () => {
     expect(result.childNodes[0].childNodes.length).toBe(2);
     expect(result.childNodes[0].childNodes[0].nodeType).toBe(Node.ELEMENT_NODE);
     expect(result.childNodes[0].childNodes[0].style.cssText).toBe(
-      "color: rgb(17, 102, 68);"
+      "color: var(--jsonml-color-date);"
     );
     expect(result.childNodes[0].childNodes[0].textContent).toBe("Date: ");
     expect(result.childNodes[0].childNodes[1].nodeType).toBe(Node.ELEMENT_NODE);
     expect(result.childNodes[0].childNodes[1].style.cssText).toBe(
-      "color: rgb(170, 17, 17);"
+      "color: var(--jsonml-color-string);"
     );
     expect(result.childNodes[0].childNodes[1].textContent).toBe(
       object.toString()
